@@ -1,0 +1,110 @@
+
+<table id="calcTable">
+    <tr>
+        <th>Emelet</th>
+        <th>Helyiség</th>
+        <th>Szélesség [m]</th>
+        <th>Hosszúság [m]</th>
+        <th>Választott rendszer</th>
+    </tr>
+    <tr>
+        <td>
+            <select>
+                <option value="-1">Pince</option>
+                <option value="0">Földszint</option>
+                <option value="1">I. Emelet</option>
+                <option value="2">II. Emelet</option>
+                <option value="3">III. Emelet</option>
+            </select>
+        </td>
+        <td>
+            <select>
+                <option value="Nappali">Nappali</option>
+                <option value="Konyha">Konyha</option>
+                <option value="Etkezo">Étkező</option>
+                <option value="Haloszoba">Hálószoba</option>
+                <option value="Gyerekszoba">Gyerekszoba</option>
+                <option value="Dolgozoszoba">Dolgozószoba</option>
+                <option value="Vendegszoba">Vendégszoba</option>
+                <option value="Eloszoba">Előszoba</option>
+                <option value="Furdoszoba">Fürdőszoba</option>
+                <option value="Zuhanyzo">Zuhanyzó</option>
+                <option value="Garazs">Garázs</option>
+                <option value="Egyeb">Egyéb</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" placeholder="0">
+        </td>
+        <td>
+            <input type="number" placeholder="0">
+        </td>
+        <td>
+            <select>
+                <option value="BK100">BK100</option>
+                <option value="AM333">AM333</option>
+                <option value="AM400">AM400</option>
+                <option value="VA75">VA75</option>
+            </select>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<button onclick="addRow()">Add Row</button>
+<button onclick="calculatePrice()">Calculate Price</button>
+
+<p>Total Price: <span id="calc_price">0</span></p>
+
+<script>
+// Lookup table for rendszer prices
+const priceLookup = {
+    BK100: 100,
+    AM333: 150,
+    AM400: 200,
+    VA75:300
+};
+
+// Function to add a new row
+function addRow() {
+    const table = document.getElementById('calcTable');
+    const newRow = table.insertRow();
+
+    const cell1 = newRow.insertCell();
+    cell1.innerHTML = '<input type="number" placeholder="0">';
+
+    const cell2 = newRow.insertCell();
+    cell2.innerHTML = '<input type="number" placeholder="0">';
+
+    const cell3 = newRow.insertCell();
+    cell3.innerHTML = `
+        <select>
+            <option value="rendszer1">Rendszer 1</option>
+            <option value="rendszer2">Rendszer 2</option>
+            <option value="rendszer3">Rendszer 3</option>
+        </select>
+    `;
+}
+
+// Function to calculate the total price
+function calculatePrice() {
+    const table = document.getElementById('calcTable');
+    let totalPrice = 0;
+
+    // Loop through rows, skip the header row (index 0)
+    for (let i = 1; i < table.rows.length; i++) {
+        const row = table.rows[i];
+
+        const width = parseFloat(row.cells[0].querySelector('input').value) || 0;
+        const length = parseFloat(row.cells[1].querySelector('input').value) || 0;
+        const system = row.cells[2].querySelector('select').value;
+        const priceMultiplier = priceLookup[system] || 0;
+
+        totalPrice += width * length * priceMultiplier;
+    }
+
+    // Update the price display
+    document.getElementById('calc_price').textContent = totalPrice.toFixed(2);
+}
+</script>
