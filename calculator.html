@@ -1,110 +1,128 @@
+<!DOCTYPE html>
+<html>
 
-<table id="calcTable">
-    <tr>
-        <th>Emelet</th>
-        <th>Helyiség</th>
-        <th>Szélesség [m]</th>
-        <th>Hosszúság [m]</th>
-        <th>Választott rendszer</th>
-    </tr>
-    <tr>
-        <td>
-            <select>
-                <option value="-1">Pince</option>
-                <option value="0">Földszint</option>
-                <option value="1">I. Emelet</option>
-                <option value="2">II. Emelet</option>
-                <option value="3">III. Emelet</option>
-            </select>
-        </td>
-        <td>
-            <select>
-                <option value="Nappali">Nappali</option>
-                <option value="Konyha">Konyha</option>
-                <option value="Etkezo">Étkező</option>
-                <option value="Haloszoba">Hálószoba</option>
-                <option value="Gyerekszoba">Gyerekszoba</option>
-                <option value="Dolgozoszoba">Dolgozószoba</option>
-                <option value="Vendegszoba">Vendégszoba</option>
-                <option value="Eloszoba">Előszoba</option>
-                <option value="Furdoszoba">Fürdőszoba</option>
-                <option value="Zuhanyzo">Zuhanyzó</option>
-                <option value="Garazs">Garázs</option>
-                <option value="Egyeb">Egyéb</option>
-            </select>
-        </td>
-        <td>
-            <input type="number" placeholder="0">
-        </td>
-        <td>
-            <input type="number" placeholder="0">
-        </td>
-        <td>
-            <select>
-                <option value="BK100">BK100</option>
-                <option value="AM333">AM333</option>
-                <option value="AM400">AM400</option>
-                <option value="VA75">VA75</option>
-            </select>
-        </td>
-    </tr>
-</table>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            color: white;
+            background-color: grey;
+        }
+    </style>
+</head>
 
-<br>
+<body>
+    <div id="pdf-content">
+        <table id="calcTable">
+            <tr>
+                <th>Emelet</th>
+                <th>Helyiség</th>
+                <th>Szélesség [m]</th>
+                <th>Hosszúság [m]</th>
+                <th>Rendszer</th>
+            </tr>
+        </table>
 
-<button onclick="addRow()">Add Row</button>
-<button onclick="calculatePrice()">Calculate Price</button>
+        <br>
+        <p>Total Price: <span id="calc_price">0</span></p>
+    </div>
 
-<p>Total Price: <span id="calc_price">0</span></p>
+    <button onclick="addRow()">Helyiség Hozzáadása</button>
+    <button onclick="calculatePrice()">Árszámolás</button>
+    <button onclick="downloadPDF()">PDF Letöltés</button>
 
-<script>
-// Lookup table for rendszer prices
-const priceLookup = {
-    BK100: 100,
-    AM333: 150,
-    AM400: 200,
-    VA75:300
-};
 
-// Function to add a new row
-function addRow() {
-    const table = document.getElementById('calcTable');
-    const newRow = table.insertRow();
+    <script>
+        // Lookup table for rendszer prices
+        const priceLookup = {
+            BK100: 100,
+            AM333: 150,
+            AM400: 200,
+            VA75: 300
+        };
 
-    const cell1 = newRow.insertCell();
-    cell1.innerHTML = '<input type="number" placeholder="0">';
+        // Function to add a new row
+        function addRow() {
+            const table = document.getElementById('calcTable');
+            const newRow = table.insertRow();
 
-    const cell2 = newRow.insertCell();
-    cell2.innerHTML = '<input type="number" placeholder="0">';
-
-    const cell3 = newRow.insertCell();
-    cell3.innerHTML = `
+            const cell_emelet = newRow.insertCell();
+            cell_emelet.innerHTML = `
         <select>
-            <option value="rendszer1">Rendszer 1</option>
-            <option value="rendszer2">Rendszer 2</option>
-            <option value="rendszer3">Rendszer 3</option>
+            <option value="-1">Pince</option>
+            <option value="0">Földszint</option>
+            <option value="1">I. Emelet</option>
+            <option value="2">II. Emelet</option>
+            <option value="3">III. Emelet</option>
+        </select>
+    `
+            const cell_helyiseg = newRow.insertCell();
+            cell_helyiseg.innerHTML = `
+        <select>
+            <option value="Nappali">Nappali</option>
+            <option value="Konyha">Konyha</option>
+            <option value="Etkezo">Étkező</option>
+            <option value="Haloszoba">Hálószoba</option>
+            <option value="Gyerekszoba">Gyerekszoba</option>
+            <option value="Dolgozoszoba">Dolgozószoba</option>
+            <option value="Vendegszoba">Vendégszoba</option>
+            <option value="Eloszoba">Előszoba</option>
+            <option value="Furdoszoba">Fürdőszoba</option>
+            <option value="Zuhanyzo">Zuhanyzó</option>
+            <option value="Garazs">Garázs</option>
+            <option value="Egyeb">Egyéb</option>
+        </select>
+    `
+
+            const cell_szelesseg = newRow.insertCell();
+            cell_szelesseg.innerHTML = '<input type="number" placeholder="0">';
+
+            const cell_hosszusag = newRow.insertCell();
+            cell_hosszusag.innerHTML = '<input type="number" placeholder="0">';
+
+            const cell_rendszer = newRow.insertCell();
+            cell_rendszer.innerHTML = `
+        <select>
+            <option value="BK100">BK100</option>
+            <option value="AM333">AM333</option>
+            <option value="AM400">AM400</option>
+            <option value="VA75">VA75</option>
         </select>
     `;
-}
+        } // put in the first row instantly
+        document.addEventListener("DOMContentLoaded", addRow);
 
-// Function to calculate the total price
-function calculatePrice() {
-    const table = document.getElementById('calcTable');
-    let totalPrice = 0;
+        // Function to calculate the total price
+        function calculatePrice() {
+            const table = document.getElementById('calcTable');
+            let totalPrice = 0;
 
-    // Loop through rows, skip the header row (index 0)
-    for (let i = 1; i < table.rows.length; i++) {
-        const row = table.rows[i];
+            // Loop through rows, skip the header row (index 0)
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
 
-        const width = parseFloat(row.cells[0].querySelector('input').value) || 0;
-        const length = parseFloat(row.cells[1].querySelector('input').value) || 0;
-        const system = row.cells[2].querySelector('select').value;
-        const priceMultiplier = priceLookup[system] || 0;
+                const width = parseFloat(row.cells[2].querySelector('input').value) || 0;
+                const length = parseFloat(row.cells[3].querySelector('input').value) || 0;
+                const system = row.cells[4].querySelector('select').value;
+                const priceMultiplier = priceLookup[system] || 0;
 
-        totalPrice += width * length * priceMultiplier;
-    }
+                console.log(`Row ${i}: width=${width}, length=${length}, system=${system}, multiplier=${priceMultiplier}`);
 
-    // Update the price display
-    document.getElementById('calc_price').textContent = totalPrice.toFixed(2);
-}
-</script>
+                const rowPrice = width * length * priceMultiplier;
+                console.log(`Row ${i} price: ${rowPrice}`);
+
+                totalPrice += rowPrice;
+            }
+
+            // Update the price display
+            document.getElementById('calc_price').textContent = totalPrice.toFixed(2);
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('calcTable');
+            html2pdf().from(element).save();
+        }
+    </script>
+</body>
+
+</html>
