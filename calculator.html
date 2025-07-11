@@ -3,15 +3,18 @@
 
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-    <style>
-        body {
-            color: white;
-            background-color: grey;
-        }
-    </style>
 </head>
 
 <body>
+    <style>
+        table {
+            size: 100%;
+        }
+
+        .pdf-content {
+            size: 100%
+        }
+    </style>
     <div id="pdf-content">
         <table id="calcTable">
             <tr>
@@ -28,26 +31,19 @@
     </div>
 
     <button onclick="addRow()">Helyiség Hozzáadása</button>
-    <button onclick="calculatePrice()">Árszámolás</button>
+    <button onclick="getOffer()">Árajánlat</button>
     <button onclick="downloadPDF()">PDF Letöltés</button>
 
+</body>
 
-    <script>
-        // Lookup table for rendszer prices
-        const priceLookup = {
-            BK100: 100,
-            AM333: 150,
-            AM400: 200,
-            VA75: 300
-        };
+<script>
+    // Function to add a new row
+    function addRow() {
+        const table = document.getElementById('calcTable');
+        const newRow = table.insertRow();
 
-        // Function to add a new row
-        function addRow() {
-            const table = document.getElementById('calcTable');
-            const newRow = table.insertRow();
-
-            const cell_emelet = newRow.insertCell();
-            cell_emelet.innerHTML = `
+        const cell_emelet = newRow.insertCell();
+        cell_emelet.innerHTML = `
         <select>
             <option value="-1">Pince</option>
             <option value="0">Földszint</option>
@@ -56,8 +52,8 @@
             <option value="3">III. Emelet</option>
         </select>
     `
-            const cell_helyiseg = newRow.insertCell();
-            cell_helyiseg.innerHTML = `
+        const cell_helyiseg = newRow.insertCell();
+        cell_helyiseg.innerHTML = `
         <select>
             <option value="Nappali">Nappali</option>
             <option value="Konyha">Konyha</option>
@@ -74,14 +70,14 @@
         </select>
     `
 
-            const cell_szelesseg = newRow.insertCell();
-            cell_szelesseg.innerHTML = '<input type="number" placeholder="0">';
+        const cell_szelesseg = newRow.insertCell();
+        cell_szelesseg.innerHTML = '<input type="number" placeholder="0">';
 
-            const cell_hosszusag = newRow.insertCell();
-            cell_hosszusag.innerHTML = '<input type="number" placeholder="0">';
+        const cell_hosszusag = newRow.insertCell();
+        cell_hosszusag.innerHTML = '<input type="number" placeholder="0">';
 
-            const cell_rendszer = newRow.insertCell();
-            cell_rendszer.innerHTML = `
+        const cell_rendszer = newRow.insertCell();
+        cell_rendszer.innerHTML = `
         <select>
             <option value="BK100">BK100</option>
             <option value="AM333">AM333</option>
@@ -89,40 +85,105 @@
             <option value="VA75">VA75</option>
         </select>
     `;
-        } // put in the first row instantly
-        document.addEventListener("DOMContentLoaded", addRow);
+    } // put in the first row instantly
+    document.addEventListener("DOMContentLoaded", addRow);
 
-        // Function to calculate the total price
-        function calculatePrice() {
-            const table = document.getElementById('calcTable');
-            let totalPrice = 0;
+    // Function to calculate the total price
+    function getOffer() {
+        const table = document.getElementById('calcTable');
+        let totalPrice = 0;
 
-            // Loop through rows, skip the header row (index 0)
-            for (let i = 1; i < table.rows.length; i++) {
-                const row = table.rows[i];
+        pdf_rows = []
+        // Loop through rows, skip the header row (index 0)
+        for (let i = 1; i < table.rows.length; i++) {
+            const row = table.rows[i];
 
-                const width = parseFloat(row.cells[2].querySelector('input').value) || 0;
-                const length = parseFloat(row.cells[3].querySelector('input').value) || 0;
-                const system = row.cells[4].querySelector('select').value;
-                const priceMultiplier = priceLookup[system] || 0;
+            const width = parseFloat(row.cells[2].querySelector('input').value) || 0;
+            const length = parseFloat(row.cells[3].querySelector('input').value) || 0;
+            const system = row.cells[4].querySelector('select').value;
 
-                console.log(`Row ${i}: width=${width}, length=${length}, system=${system}, multiplier=${priceMultiplier}`);
-
-                const rowPrice = width * length * priceMultiplier;
-                console.log(`Row ${i} price: ${rowPrice}`);
-
-                totalPrice += rowPrice;
+            let area = width * length;
+            let rows = makeOfferRows(area, system)
+            for(let i = 0; i < rows.length; i++){
+                pdf_rows.push(rows[i])
             }
-
-            // Update the price display
-            document.getElementById('calc_price').textContent = totalPrice.toFixed(2);
         }
 
-        function downloadPDF() {
-            const element = document.getElementById('calcTable');
-            html2pdf().from(element).save();
+        // Update the price display
+        document.getElementById('calc_price').textContent = 0;
+
+        // Update the table
+        makePDFcontent(pdf_rows);
+    }
+
+    function makeOfferRows(area, system){
+        let rows = []
+        switch (system){
+            case "BK100":
+                rows.push({
+                    termeknev:"béka100",
+                    egyseg:"m^2",
+                    mennyiseg:area,
+                    egysegar:2000,
+                    teljesar:0
+                });
+                break;
+            case "AM333":
+                rows.push({
+                    termeknev:"am333",
+                    egyseg:"m^2",
+                    mennyiseg:area,
+                    egysegar:2000,
+                    teljesar:0
+                })
+                break;
+            case "AM400":
+                rows.push({
+                    termeknev:"am400",
+                    egyseg:"m^2",
+                    mennyiseg:area,
+                    egysegar:2000,
+                    teljesar:0
+                })
+                break;
+            case "VA75":
+                rows.push({
+                    termeknev:"va75",
+                    egyseg:"m^2",
+                    mennyiseg:area,
+                    egysegar:2000,
+                    teljesar:0
+                })
+                break;
         }
-    </script>
-</body>
+        return rows;
+    }
+
+    function makePDFcontent(rows) {
+        const table = document.getElementById('calcTable');
+        table.innerHTML = `
+            <tr>
+                <th>Termék Név</th>
+                <th>Mennyiségi egység</th>
+                <th>Mennyiség</th>
+                <th>Egységár [Ft]</th>
+                <th>Teljes Ár [Ft]</th>
+            </tr>
+            `
+        for(let i = 0; i < rows.length; i++){
+            let newRow = table.insertRow();
+            let j = 0;
+            for(let key in rows[i]){
+                let cell = newRow.insertCell()
+                cell.innerHTML = "<p>"+rows[i][key]+"</p>"
+            }
+        }
+    }
+
+    function downloadPDF() {
+        const element = document.getElementById('pdf-content');
+        html2pdf().from(element).save();
+    }
+</script>
 
 </html>
