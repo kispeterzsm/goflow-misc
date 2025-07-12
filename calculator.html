@@ -3,20 +3,104 @@
 
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: white;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        /* Header cells */
+        th {
+            background-color: #00AEEF;
+            /* Light blue */
+            padding: 8px;
+            text-align: center;
+        }
+
+        td:nth-child(1) {
+            word-wrap: break-word;
+            /* Break long words */
+            white-space: normal;
+            /* Allow wrapping */
+            vertical-align: top;
+            /* Optional: Align wrapped text to the top 210mm*297mm*/
+            min-width: 20mm;
+            overflow-wrap: break-word;
+        }
+
+        /* Table body rows */
+        tbody tr:nth-child(even) {
+            background-color: white;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #00afef86;
+            /* Light blue with transparency */
+        }
+
+        /* Optional: Add borders and padding */
+        #pdf-content td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        #pdf-content {
+            max-width: 277mm;
+        }
+
+
+        /* Make inputs and selects fill the entire cell */
+        td input,
+        td select {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            /* Prevents overflow by including padding/border */
+            border: none;
+            padding: 8px;
+            /* Optional: mimic spacing without shrinking */
+            font-size: inherit;
+            /* Matches table font */
+            background: transparent;
+            text-align: center;
+        }
+
+        td:nth-child(2),
+        td:nth-child(3),
+        td:nth-child(4),
+        td:nth-child(5) {
+            text-align: center;
+            max-width: 40mm;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
 </head>
 
 <body>
-    <style>
-        table {
-            size: 100%;
-        }
-
-        .pdf-content {
-            size: 100%
-        }
-    </style>
-    <div id="pdf-content">
-        <table id="calcTable">
+    <div id="calc-content">
+        <table id="calc-table">
             <tr>
                 <th>Emelet</th>
                 <th>Helyiség</th>
@@ -25,21 +109,52 @@
                 <th>Rendszer</th>
             </tr>
         </table>
+    </div>
+    <div id="pdf-content">
+        <h2>Árajánlat</h2>
+
+        <table id="pdf-table">
+        </table>
 
         <br>
         <p>Total Price: <span id="calc_price">0</span></p>
     </div>
 
-    <button onclick="addRow()">Helyiség Hozzáadása</button>
-    <button onclick="getOffer()">Árajánlat</button>
-    <button onclick="downloadPDF()">PDF Letöltés</button>
+    <button id="addrow-btn" onclick="addRow()">Helyiség Hozzáadása</button>
+    <button id="offer-btn" onclick="getOffer()">Árajánlat</button>
+    <button id="back-btn" onclick="toggleVisibility('calc')">Vissza</button>
+    <button id="pdf-btn" onclick="downloadPDF()">PDF Letöltés</button>
 
 </body>
 
 <script>
+    function toggleVisibility(mode) {
+        switch (mode) {
+            case "calc":
+                document.getElementById('pdf-content').style.display = "none";
+                document.getElementById('pdf-btn').style.display = "none";
+                document.getElementById('back-btn').style.display = "none";
+                document.getElementById('calc-content').style.display = "block";
+                document.getElementById('offer-btn').style.display = "block";
+                document.getElementById('addrow-btn').style.display = "block";
+
+                break;
+
+            case "pdf":
+                document.getElementById('calc-content').style.display = "none";
+                document.getElementById('offer-btn').style.display = "none";
+                document.getElementById('addrow-btn').style.display = "none";
+                document.getElementById('pdf-content').style.display = "block";
+                document.getElementById('pdf-btn').style.display = "block";
+                document.getElementById('back-btn').style.display = "block";
+                break;
+        }
+    }
+    toggleVisibility("calc")
+
     // Function to add a new row
     function addRow() {
-        const table = document.getElementById('calcTable');
+        const table = document.getElementById('calc-table');
         const newRow = table.insertRow();
 
         const cell_emelet = newRow.insertCell();
@@ -90,10 +205,10 @@
 
     // Function to calculate the total price
     function getOffer() {
-        const table = document.getElementById('calcTable');
+        const table = document.getElementById('calc-table');
         let totalPrice = 0;
 
-        pdf_rows = []
+        let pdf_rows = [];
         // Loop through rows, skip the header row (index 0)
         for (let i = 1; i < table.rows.length; i++) {
             const row = table.rows[i];
@@ -104,55 +219,55 @@
 
             let area = width * length;
             let rows = makeOfferRows(area, system)
-            for(let i = 0; i < rows.length; i++){
+            for (let i = 0; i < rows.length; i++) {
                 pdf_rows.push(rows[i])
             }
         }
 
         // Update the price display
         document.getElementById('calc_price').textContent = 0;
-
+        toggleVisibility("pdf");
         // Update the table
         makePDFcontent(pdf_rows);
     }
 
-    function makeOfferRows(area, system){
+    function makeOfferRows(area, system) {
         let rows = []
-        switch (system){
+        switch (system) {
             case "BK100":
                 rows.push({
-                    termeknev:"béka100",
-                    egyseg:"m^2",
-                    mennyiseg:area,
-                    egysegar:2000,
-                    teljesar:0
+                    termeknev: "béka100",
+                    egyseg: "m^2",
+                    mennyiseg: area,
+                    egysegar: 2000,
+                    teljesar: 0
                 });
                 break;
             case "AM333":
                 rows.push({
-                    termeknev:"am333",
-                    egyseg:"m^2",
-                    mennyiseg:area,
-                    egysegar:2000,
-                    teljesar:0
+                    termeknev: "THIS IS A REALLY LONG TEXT AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                    egyseg: "m^2",
+                    mennyiseg: area,
+                    egysegar: 2000,
+                    teljesar: 0
                 })
                 break;
             case "AM400":
                 rows.push({
-                    termeknev:"am400",
-                    egyseg:"m^2",
-                    mennyiseg:area,
-                    egysegar:2000,
-                    teljesar:0
+                    termeknev: "am400",
+                    egyseg: "m^2",
+                    mennyiseg: area,
+                    egysegar: 2000,
+                    teljesar: 0
                 })
                 break;
             case "VA75":
                 rows.push({
-                    termeknev:"va75",
-                    egyseg:"m^2",
-                    mennyiseg:area,
-                    egysegar:2000,
-                    teljesar:0
+                    termeknev: "va75",
+                    egyseg: "m^2",
+                    mennyiseg: area,
+                    egysegar: 2000,
+                    teljesar: 0
                 })
                 break;
         }
@@ -160,7 +275,7 @@
     }
 
     function makePDFcontent(rows) {
-        const table = document.getElementById('calcTable');
+        const table = document.getElementById('pdf-table');
         table.innerHTML = `
             <tr>
                 <th>Termék Név</th>
@@ -169,20 +284,28 @@
                 <th>Egységár [Ft]</th>
                 <th>Teljes Ár [Ft]</th>
             </tr>
-            `
-        for(let i = 0; i < rows.length; i++){
+        `
+        for (let i = 0; i < rows.length; i++) {
             let newRow = table.insertRow();
             let j = 0;
-            for(let key in rows[i]){
+            for (let [key, value] of Object.entries(rows[i])) {
                 let cell = newRow.insertCell()
-                cell.innerHTML = "<p>"+rows[i][key]+"</p>"
+                cell.innerHTML = value
             }
         }
     }
 
     function downloadPDF() {
         const element = document.getElementById('pdf-content');
-        html2pdf().from(element).save();
+        const opt = {
+            margin: 10,            // millimeters
+            filename: 'arajanlat.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
     }
 </script>
 
