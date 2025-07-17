@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anyagvágás optimalizáló</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 2em auto;
+            background-color: darkslategrey;
+            color: darkorange;
+        }
+
+        label {
+            display: block;
+            margin-top: 1em;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.5em;
+            box-sizing: border-box;
+            
+        }
+
+        .output {
+            margin-top: 1em;
+            background: #f5f5f5;
+            padding: 1em;
+            border-radius: 4px;
+            color: black;
+        }
+
+        table.result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5em;
+        }
+
+        table.result-table th,
+        table.result-table td {
+            border: 1px solid #ccc;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        table.result-table th {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Anyagvágás optimalizáló</h1>
+    <label for="lengths">Kivágandó hosszak (","-vel elválasztva, tizedeshez használj "."-ot):</label>
+    <input id="lengths" type="text" placeholder="pl.: 1.2, 3.3, 2" />
+
+    <label for="pipeLength">Alapanyag hossz:</label>
+    <input id="pipeLength" type="number" value="4.5" />
+
+    <button id="calculate"><strong>Számol</strong></button>
+
+    <div id="result" class="output"></div>
+
+    <script>
+        document.getElementById('calculate').addEventListener('click', () => {
+            const parts = document.getElementById('lengths').value
+                .split(',')
+                .map(s => parseFloat(s.trim()))
+                .filter(n => !isNaN(n));
+            const pipeLen = parseFloat(document.getElementById('pipeLength').value);
+            if (parts.length === 0 || isNaN(pipeLen) || pipeLen <= 0) {
+                alert('Valamit rosszul írtál be.');
+                return;
+            }
+
+            // First Fit Decreasing heuristic
+            parts.sort((a, b) => b - a);
+            const bins = [];
+            const EPS = 1e-6;
+
+            parts.forEach(part => {
+                let placed = false;
+                for (const bin of bins) {
+                    if (bin.remaining + EPS >= part) {
+                        bin.parts.push(part);
+                        bin.remaining -= part;
+                        if (Math.abs(bin.remaining) < EPS) bin.remaining = 0;
+                        else bin.remaining = parseFloat(bin.remaining.toFixed(6));
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) {
+                    const rem = pipeLen - part;
+                    bins.push({ parts: [part], remaining: Math.abs(rem) < EPS ? 0 : parseFloat(rem.toFixed(6)) });
+                }
+            });
+
+            // Render result as table
+            const container = document.getElementById('result');
+            let html = `<strong>Szükséges anyagmennyiség: ${bins.length}</strong>`;
+            html += `<table class="result-table">
+        <thead>
+          <tr><th>Anyag száma</th><th>Kivágható darabok</th><th>Maradék</th></tr>
+        </thead>
+        <tbody>
+          ${bins.map((bin, i) =>
+                `<tr><td>${i + 1}</td><td>${bin.parts.join(', ')}</td><td>${bin.remaining}</td></tr>`
+            ).join('')}
+        </tbody>
+      </table>`;
+            container.innerHTML = html;
+        });
+    </script>
+</body>
+
+</html>
