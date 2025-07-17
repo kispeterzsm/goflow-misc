@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <title>Pipe Cutting Optimizer (Table Input)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 2em auto;
+      background-color: darkslategrey;
+      color: white;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+      color: black;
+    }
+
+    th {
+      background: white;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px;
+    }
+
+    button {
+      margin-top: 1em;
+      padding: 0.5em 1em;
+    }
+
+    .output {
+      margin-top: 2em;
+      background: white;
+      color: black;
+      padding: 1em;
+      border-radius: 4px;
+    }
+
+    table.result-table {
+      width: 100%;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Pipe Cutting Optimizer</h1>
+  <label for="pipeLength">Alapanyag hossza:</label>
+  <input id="pipeLength" type="number" value="4.5" step="any">
+
+  <h2>Kivágandó darabok</h2>
+  <table id="partsTable">
+    <thead>
+      <tr>
+        <th>Mennyiség</th>
+        <th>Hossz</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="number" min="1" value="1" step="1"></td>
+        <td><input type="number" min="0" step="any"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button onclick="addRow()">Új Sor</button>
+  <button onclick="calculateCuts()">Számol</button>
+  <button id="pdf-download" onclick="downloadPDF()">PDF Letöltés</button>
+
+  <div id="result" class="output"></div>
+
+  <script>
+    function addRow() {
+      const table = document.getElementById('partsTable').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      const cell1 = row.insertCell(0);
+      const cell2 = row.insertCell(1);
+      cell1.innerHTML = '<input type="number" min="1" value="1" step="1">';
+      cell2.innerHTML = '<input type="number" min="0" step="any">';
+    }
+
+    function calculateCuts() {
+      const pipeLen = parseFloat(document.getElementById('pipeLength').value);
+      if (isNaN(pipeLen) || pipeLen <= 0) {
+        alert('Rosszul írtad be az Alapanyag hosszát.');
+        return;
+      }
+
+      const rows = document.getElementById('partsTable').getElementsByTagName('tbody')[0].rows;
+      let parts = [];
+      for (let row of rows) {
+        const qty = parseInt(row.cells[0].querySelector('input').value);
+        const len = parseFloat(row.cells[1].querySelector('input').value);
+        if (!isNaN(qty) && !isNaN(len) && qty > 0 && len > 0) {
+          for (let i = 0; i < qty; i++) parts.push(len);
+        }
+      }
+
+      if (parts.length === 0) {
+        alert('Valamit rosszul írtál be.');
+        return;
+      }
+
+      // First Fit Decreasing heuristic
+      parts.sort((a, b) => b - a);
+      const bins = [];
+      const EPS = 1e-6;
+
+      parts.forEach(part => {
+        let placed = false;
+        for (const bin of bins) {
+          if (bin.remaining + EPS >= part) {
+            bin.parts.push(part);
+            bin.remaining -= part;
+            if (Math.abs(bin.remaining) < EPS) bin.remaining = 0;
+            else bin.remaining = parseFloat(bin.remaining.toFixed(6));
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          const rem = pipeLen - part;
+          bins.push({ parts: [part], remaining: Math.abs(rem) < EPS ? 0 : parseFloat(rem.toFixed(6)) });
+        }
+      });
+
+      // Render result
+      const container = document.getElementById('result');
+      let html = `<strong>Össz. szükséges alapanyag: ${bins.length}</strong>`;
+      html += `<table class="result-table">
+        <thead><tr><th>Alapanyag száma</th><th>Kivágható darabok</th><th>Maradék</th></tr></thead>
+        <tbody>
+        ${bins.map((bin, i) =>
+        `<tr><td>${i + 1}</td><td>${bin.parts.join(', ')}</td><td>${bin.remaining}</td></tr>`
+      ).join('')}
+        </tbody>
+      </table>`;
+      container.innerHTML = html;
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('result');
+      const opt = {
+        margin: 0,            // millimeters
+        filename: 'vagasok.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+
+</html>
