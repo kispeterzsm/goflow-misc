@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-  <title>Pipe Cutting Optimizer (Table Input)</title>
+  <title>Anyagvágás optimalizáló</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
 </head>
 
 <body>
-  <h1>Pipe Cutting Optimizer</h1>
+  <h1>Anyagvágás optimalizáló</h1>
   <label for="pipeLength">Alapanyag hossza:</label>
   <input id="pipeLength" type="number" value="4.5" step="any">
 
@@ -69,7 +69,7 @@
     </thead>
     <tbody>
       <tr>
-        <td><input type="number" min="1" value="1" step="1"></td>
+        <td><input type="number" min="1" step="1"></td>
         <td><input type="number" min="0" step="any"></td>
       </tr>
     </tbody>
@@ -86,7 +86,7 @@
       const row = table.insertRow();
       const cell1 = row.insertCell(0);
       const cell2 = row.insertCell(1);
-      cell1.innerHTML = '<input type="number" min="1" value="1" step="1">';
+      cell1.innerHTML = '<input type="number" min="1" step="1">';
       cell2.innerHTML = '<input type="number" min="0" step="any">';
     }
 
