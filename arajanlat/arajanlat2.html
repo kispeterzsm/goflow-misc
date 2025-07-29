@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoFLow árajánlat</title>
+</head>
+
+<body>
+    <h1>GoFLow árajánlat</h1>
+
+    <button onclick="addRoom()">Add Room</button>
+    <button onclick="validateRooms()">Validate</button>
+
+    <div id="validationResults"></div>
+
+    <table id="roomsTable">
+        <thead>
+            <tr>
+                <th>Emelet</th>
+                <th>Szoba</th>
+                <th>Mennyezet fűtés</th>
+                <th>Padlófűtés</th>
+                <th>Nem téglalap alakú szoba</th>
+                <th>Méret(ek)</th>
+                <th>Osztó-gyűjtő</th>
+                <th>Osztó-gyűjtőtől mért távolság</th>
+                <th>Termosztát</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="roomsTableBody">
+        </tbody>
+    </table>
+
+    <script>
+        let roomCounter = 0;
+
+        function addRoom() {
+            roomCounter++;
+            const tableBody = document.getElementById('roomsTableBody');
+            const row = document.createElement('tr');
+            row.id = `room-${roomCounter}`;
+
+            row.innerHTML = `
+                <td><input type="number" name="floor" value="0" required></td>
+                <td>
+                    <select name="roomName" required>
+                        <option value="Nappali">Nappali</option>
+                        <option value="Konyha">Konyha</option>
+                        <option value="Etkezo">Étkező</option>
+                        <option value="Haloszoba">Hálószoba</option>
+                        <option value="Gyerekszoba">Gyerekszoba</option>
+                        <option value="Dolgozoszoba">Dolgozószoba</option>
+                        <option value="Vendegszoba">Vendégszoba</option>
+                        <option value="Eloszoba">Előszoba</option>
+                        <option value="Furdoszoba">Fürdőszoba</option>
+                        <option value="Zuhanyzo">Zuhanyzó</option>
+                        <option value="Garazs">Garázs</option>
+                        <option value="Egyeb">Egyéb</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="heatingSystem" onchange="updateDistanceField(this)" required>
+                        <option value="N">Nincs</option>
+                        <option value="BK100">BK100</option>
+                        <option value="AM333">AM333</option>
+                        <option value="AM400">AM400</option>
+                        <option value="VA75">VA75</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="checkbox" name="floorHeating" onchange="updateDistanceField(this)">
+                </td>
+                <td>
+                    <input type="checkbox" name="specialShape" onchange="updateSizeFields(this)">
+                </td>
+                <td class="size-fields">
+                    <div class="square-meters" style="display: none;">
+                        <input type="number" name="squareMeters" placeholder="Square meters" step="0.1" min="0">
+                    </div>
+                    <div class="side-lengths" style="display: block;">
+                        <input type="number" name="length" placeholder="Length (m)" step="0.1" min="0">
+                        <input type="number" name="width" placeholder="Width (m)" step="0.1" min="0">
+                    </div>
+                </td>
+                <td>
+                    <input type="checkbox" name="hasHub">
+                </td>
+                <td class="distance-field">
+                    <input type="number" name="distanceFromHub" placeholder="Distance (m)" step="0.1" min="0" disabled>
+                </td>
+                <td>
+                    <input type="checkbox" name="hasThermostat">
+                </td>
+                <td>
+                    <select name="pipeLen" required>
+                        <option value="100">100 mm</option>
+                        <option value="150">150 mm</option>
+                        <option value="200">200 mm</option>
+                        <option value="250">250 mm</option>
+                        <option value="300">300 mm</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="pipeWidth" required>
+                        <option value="16">D16x2,0 mm</option>
+                        <option value="20">D20x2,0 mm</option>
+                    </select>
+                </td>
+                <td>
+                    <button onclick="deleteRoom('room-${roomCounter}')">Szoba törlése</button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        }
+
+        function deleteRoom(roomId) {
+            const row = document.getElementById(roomId);
+            if (row) {
+                row.remove();
+            }
+        }
+
+        function updateSizeFields(checkbox) {
+            const row = checkbox.closest('tr');
+            const squareMetersDiv = row.querySelector('.square-meters');
+            const sideLengthsDiv = row.querySelector('.side-lengths');
+
+            if (checkbox.checked) {
+                // Special shape - show square meters input
+                squareMetersDiv.style.display = 'block';
+                sideLengthsDiv.style.display = 'none';
+                // Clear side length inputs
+                row.querySelector('input[name="length"]').value = '';
+                row.querySelector('input[name="width"]').value = '';
+            } else {
+                // Regular shape - show side length inputsBK100
+                squareMetersDiv.style.display = 'none';
+                sideLengthsDiv.style.display = 'block';
+                // Clear square meters input
+                row.querySelector('input[name="squareMeters"]').value = '';
+            }
+        }
+
+        function updateDistanceField(element) {
+            const row = element.closest('tr');
+            const distanceInput = row.querySelector('input[name="distanceFromHub"]');
+            const heatingSystemSelect = row.querySelector('select[name="heatingSystem"]');
+            const floorHeatingCheckbox = row.querySelector('input[name="floorHeating"]');
+
+            // Enable distance field if heating system is B OR if floor heating is checked
+            const isSystemB = heatingSystemSelect.value === 'BK100';
+            const hasFloorHeating = floorHeatingCheckbox.checked;
+
+            if (isSystemB || hasFloorHeating) {
+                distanceInput.disabled = false;
+                distanceInput.required = true;
+            } else {
+                distanceInput.disabled = true;
+                distanceInput.required = false;
+                distanceInput.value = '';
+            }
+        }
+
+        function getAllRoomsData() {
+            const rooms = [];
+            const rows = document.querySelectorAll('#roomsTableBody tr');
+
+            rows.forEach(row => {
+                const room = {
+                    floor: row.querySelector('input[name="floor"]').value,
+                    roomName: row.querySelector('select[name="roomName"]').value,
+                    heatingSystem: row.querySelector('select[name="heatingSystem"]').value,
+                    floorHeating: row.querySelector('input[name="floorHeating"]').checked,
+                    specialShape: row.querySelector('input[name="specialShape"]').checked,
+                    hasHub: row.querySelector('input[name="hasHub"]').checked,
+                    hasThermostat: row.querySelector('input[name="hasThermostat"]').checked
+                };
+
+                // Add size information based on shape type
+                if (room.specialShape) {
+                    room.squareMeters = row.querySelector('input[name="squareMeters"]').value;
+                } else {
+                    room.length = row.querySelector('input[name="length"]').value;
+                    room.width = row.querySelector('input[name="width"]').value;
+                }
+
+                // Add distance if applicable
+                const distanceInput = row.querySelector('input[name="distanceFromHub"]');
+                if (!distanceInput.disabled) {
+                    room.distanceFromHub = distanceInput.value;
+                }
+
+                rooms.push(room);
+            });
+
+            return rooms;
+        }
+
+        function validateRooms() {
+            const rooms = getAllRoomsData();
+            const errors = [];
+            const resultsDiv = document.getElementById('validationResults');
+
+            if (rooms.length === 0) {
+                errors.push('No rooms have been added.');
+                displayValidationResults(errors);
+                return;
+            }
+
+            // Check each room for required fields
+            rooms.forEach((room, index) => {
+                const roomNumber = index + 1;
+
+                // Check required basic fields
+                if (!room.floor) {
+                    errors.push(`Room ${roomNumber}: Floor number is required.`);
+                }
+
+                if (!room.roomName.trim()) {
+                    errors.push(`Room ${roomNumber}: Room name is required.`);
+                }
+
+                if (!room.heatingSystem) {
+                    errors.push(`Room ${roomNumber}: Heating system must be selected.`);
+                }
+
+                // Check size fields based on shape type
+                if (room.specialShape) {
+                    if (!room.squareMeters || room.squareMeters <= 0) {
+                        errors.push(`Room ${roomNumber}: Square meters is required for rooms with special shapes and must be greater than 0.`);
+                    }
+                } else {
+                    if (!room.length || room.length <= 0) {
+                        errors.push(`Room ${roomNumber}: Length is required for regular-shaped rooms and must be greater than 0.`);
+                    }
+                    if (!room.width || room.width <= 0) {
+                        errors.push(`Room ${roomNumber}: Width is required for regular-shaped rooms and must be greater than 0.`);
+                    }
+                }
+
+                // Check distance field when required
+                if ((room.heatingSystem === 'B' || room.floorHeating) && (!room.distanceFromHub || room.distanceFromHub < 0)) {
+                    errors.push(`Room ${roomNumber}: Distance from hub is required when heating system is B or floor heating is enabled, and must be 0 or greater.`);
+                }
+            });
+
+            // Check hub requirements - each floor must have exactly one hub
+            const floorHubs = {};
+            rooms.forEach((room, index) => {
+                const floor = parseInt(room.floor);
+                if (!floorHubs[floor]) {
+                    floorHubs[floor] = [];
+                }
+                if (room.hasHub) {
+                    floorHubs[floor].push(index + 1);
+                }
+            });
+
+            Object.keys(floorHubs).forEach(floor => {
+                const hubRooms = floorHubs[floor];
+                if (hubRooms.length === 0) {
+                    errors.push(`Floor ${floor}: No hub found. Each floor must have exactly one room with a hub.`);
+                } else if (hubRooms.length > 1) {
+                    errors.push(`Floor ${floor}: Multiple hubs found in rooms ${hubRooms.join(', ')}. Each floor must have exactly one hub.`);
+                }
+            });
+
+            displayValidationResults(errors, rooms);
+        }
+
+        function displayValidationResults(errors, rooms) {
+            const resultsDiv = document.getElementById('validationResults');
+
+            if (errors.length === 0) {
+                resultsDiv.innerHTML = '<div style="color: green; font-weight: bold; margin: 10px 0;">✓ All rooms are valid!</div>';
+
+                showResultTable(rooms)
+            } else {
+                let errorHTML = '<div style="color: red; font-weight: bold; margin: 10px 0;">Validation Errors:</div><ul style="color: red;">';
+                errors.forEach(error => {
+                    errorHTML += `<li>${error}</li>`;
+                });
+                errorHTML += '</ul>';
+                resultsDiv.innerHTML = errorHTML;
+            }
+        }
+
+        function showResultTable(rooms) {
+            const results = []
+            rooms.forEach((room, index) => {
+                results.push(roomToItems(room))
+            })
+            console.log(results)
+        }
+
+        function roomToItems(room) {
+            switch (room.heatingSystem) {
+                case "BK100":
+                    return panelCalc(room, [0.8, 1, 1.2]);
+                    break;
+                case "AM333":
+                    return panelCalc(room, [0.333]);
+                    break;
+                case "AM400":
+                    return panelCalc(room, [0.4]);
+                    break;
+                case "VA75":
+
+                    break;
+            }
+
+            return "peepee"
+        }
+
+        function panelCalc(room, panelSizes) {
+            let panelLength = 0;
+            let panelAmount = 0;
+            let pipe = 2;
+            let panelArea = 0;
+            if (room.specialShape) {
+                panelArea = Number(room.squareMeters) * 0.8;
+
+            } else {
+                // panel length
+                let longerSide = Number(room.length);
+                let shorterSide = Number(room.width);
+                let panelRowCount = 1;
+                if (room.width > longerSide) {
+                    longerSide = room.width;
+                    shorterSide = room.length;
+                }
+                longerSide = longerSide * 1000
+                if (longerSide < 5200) {
+                    panelLength = longerSide - 200;
+                } else if (longerSide < 10400) {
+                    panelLength = (longerSide - 400) / 2;
+                    panelRowCount = 2;
+                } else {
+                    panelLength = (longerSide - 600) / 3;
+                    panelRowCount = 3;
+                }
+                //panel amounts
+                let freeSpace = shorterSide - 0.2;
+                let bestSize = 0;
+                let bestRemainder = freeSpace;
+                panelSizes.forEach((size, index) => {
+                    let remainder = freeSpace % size;
+                    if (remainder < bestRemainder) {
+                        bestRemainder = remainder;
+                        bestSize = size;
+                    }
+                })
+                panelAmount = Math.round(freeSpace / bestSize) * panelRowCount;
+
+                //csőráhagyás
+                if (room.distanceFromHub) {
+                    pipe += Number(room.distanceFromHub);
+                }
+            }
+            res = {
+                "panelAmount": panelAmount,
+                "panelLength": panelLength,
+                "panelArea": panelArea,
+                "pipe": pipe
+            }
+            return res;
+        }
+
+        // Add first room by default
+        addRoom();
+    </script>
+</body>
+
+</html>

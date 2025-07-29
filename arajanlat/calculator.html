@@ -96,7 +96,6 @@
             padding: 10px 20px;
             font-size: 16px;
         }
-
     </style>
 </head>
 
@@ -225,18 +224,18 @@
             for (let i = 0; i < rows.length; i++) {
                 teljesar = rows[i].egysegar * rows[i].mennyiseg
                 rows[i].teljesar = teljesar
-                totalPrice+=teljesar
+                totalPrice += teljesar
                 pdf_rows.push(rows[i])
             }
         }
 
         pdf_rows.push({
-                    termeknev: "",
-                    egyseg: "",
-                    mennyiseg: "",
-                    egysegar: "",
-                    teljesar: totalPrice
-                })
+            termeknev: "",
+            egyseg: "",
+            mennyiseg: "",
+            egysegar: "",
+            teljesar: totalPrice
+        })
 
         toggleVisibility("pdf");
         // Update the table
