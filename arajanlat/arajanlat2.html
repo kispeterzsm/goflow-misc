@@ -12,6 +12,7 @@
 
     <button onclick="addRoom()">Add Room</button>
     <button onclick="validateRooms()">Validate</button>
+    <button onclick="switchView()">Switch table</button>
 
     <div id="validationResults"></div>
 
@@ -27,12 +28,31 @@
                 <th>Osztó-gyűjtő</th>
                 <th>Osztó-gyűjtőtől mért távolság</th>
                 <th>Termosztát</th>
-                <th></th>
+                <th>Csőosztás</th>
+                <th>Csőméret</th>
             </tr>
         </thead>
         <tbody id="roomsTableBody">
         </tbody>
     </table>
+    
+    <table id="arajanlatTable">
+        <thead>
+            <tr>
+                <th>Termék Név</th>
+                <th>Mennyiségi egység</th>
+                <th>Mennyiség</th>
+                <th>Listaár [Ft]</th>
+                <th>Engedmény [%]</th>
+                <th>Engedményes ár [Ft]</th>
+                <th>Teljes ár [Ft]</th>
+            </tr>
+        </thead>
+        <tbody id="arajanlatTableBody">
+        </tbody>
+    </table>
+
+
 
     <script>
         let roomCounter = 0;
@@ -95,7 +115,7 @@
                     <input type="checkbox" name="hasThermostat">
                 </td>
                 <td>
-                    <select name="pipeLen" required>
+                    <select name="pipeOsztas" required>
                         <option value="100">100 mm</option>
                         <option value="150">150 mm</option>
                         <option value="200">200 mm</option>
@@ -104,7 +124,7 @@
                     </select>
                 </td>
                 <td>
-                    <select name="pipeWidth" required>
+                    <select name="pipeSize" required>
                         <option value="16">D16x2,0 mm</option>
                         <option value="20">D20x2,0 mm</option>
                     </select>
@@ -290,11 +310,13 @@
         }
 
         function showResultTable(rooms) {
-            const results = []
+            const results = [];
             rooms.forEach((room, index) => {
-                results.push(roomToItems(room))
+                items = roomToItems(room);
+                room.items= items;
+                results.push(items);
             })
-            console.log(results)
+            console.log(results);
         }
 
         function roomToItems(room) {
@@ -309,7 +331,7 @@
                     return panelCalc(room, [0.4]);
                     break;
                 case "VA75":
-
+                    return panelCalc(room, [0.3, 0.45, 0.6, 0.75, 0.9, 1.05, 1.2])
                     break;
             }
 
@@ -319,10 +341,11 @@
         function panelCalc(room, panelSizes) {
             let panelLength = 0;
             let panelAmount = 0;
+            let bestPanelWidth = 0;
             let pipe = 2;
             let panelArea = 0;
             if (room.specialShape) {
-                panelArea = Number(room.squareMeters) * 0.8;
+                panelArea = Math.round((Number(room.squareMeters) * 0.8)*100)/100;
 
             } else {
                 // panel length
@@ -345,16 +368,15 @@
                 }
                 //panel amounts
                 let freeSpace = shorterSide - 0.2;
-                let bestSize = 0;
                 let bestRemainder = freeSpace;
                 panelSizes.forEach((size, index) => {
                     let remainder = freeSpace % size;
-                    if (remainder < bestRemainder) {
+                    if (remainder <= bestRemainder) {
                         bestRemainder = remainder;
-                        bestSize = size;
+                        bestPanelWidth = size;
                     }
                 })
-                panelAmount = Math.round(freeSpace / bestSize) * panelRowCount;
+                panelAmount = Math.round(freeSpace / bestPanelWidth) * panelRowCount;
 
                 //csőráhagyás
                 if (room.distanceFromHub) {
@@ -363,6 +385,7 @@
             }
             res = {
                 "panelAmount": panelAmount,
+                "panelWidth": bestPanelWidth,
                 "panelLength": panelLength,
                 "panelArea": panelArea,
                 "pipe": pipe
@@ -370,7 +393,20 @@
             return res;
         }
 
+        function switchView(){
+            let roomsTable = document.getElementById('roomsTable')
+            let arajanlatTable = document.getElementById('arajanlatTable');
+            if(roomsTable.style.display != "none"){
+                roomsTable.style.display = "none";
+                arajanlatTable.style.display = "table";
+            }else{
+                roomsTable.style.display = "table";
+                arajanlatTable.style.display = "none";
+            }
+        }
+
         // Add first room by default
+        document.getElementById('arajanlatTable').style.display = "none";
         addRoom();
     </script>
 </body>
