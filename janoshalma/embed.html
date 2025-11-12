@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      fetch("http://goflow.kispeterzsm.com/janoshalma/anyagvagas_v2.html")
+        .then(r => r.text())
+        .then(html => {
+          document.open();
+          document.write(html);
+          document.close();
+        })
+        .catch(err => document.body.innerText = "Failed to load page: " + err);
+    </script>
+  </head>
+</html>
