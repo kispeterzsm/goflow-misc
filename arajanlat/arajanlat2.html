@@ -320,25 +320,35 @@
         }
 
         function roomToItems(room) {
+            // panel calculations
             switch (room.heatingSystem) {
                 case "BK100":
-                    return panelCalc(room, [0.8, 1, 1.2]);
+                    room.panels= panelCalc(room, [0.8, 1, 1.2]);
                     break;
                 case "AM333":
-                    return panelCalc(room, [0.333]);
+                    room.panels= panelCalc(room, [0.333]);
                     break;
                 case "AM400":
-                    return panelCalc(room, [0.4]);
+                    room.panels= panelCalc(room, [0.4]);
                     break;
                 case "VA75":
-                    return panelCalc(room, [0.3, 0.45, 0.6, 0.75, 0.9, 1.05, 1.2])
+                    room.panels= panelCalc(room, [0.3, 0.45, 0.6, 0.75, 0.9, 1.05, 1.2], true, {
+                        0.3:5000,
+                        0.45:5000,
+                        0.6:5000,
+                        0.75:4000,
+                        0.9:3300,
+                        1.05:2800,
+                        1.2:2500
+                    })
                     break;
             }
+            
 
-            return "peepee"
+            return room
         }
 
-        function panelCalc(room, panelSizes) {
+        function panelCalc(room, panelSizes, specialMaxLengths=false, specialMaxLengthsLookup={}) {
             let panelLength = 0;
             let panelAmount = 0;
             let bestPanelWidth = 0;
@@ -356,7 +366,7 @@
                     longerSide = room.width;
                     shorterSide = room.length;
                 }
-                longerSide = longerSide * 1000
+                longerSide = longerSide * 1000;
                 if (longerSide < 5200) {
                     panelLength = longerSide - 200;
                 } else if (longerSide < 10400) {
@@ -366,6 +376,18 @@
                     panelLength = (longerSide - 600) / 3;
                     panelRowCount = 3;
                 }
+
+                // ez itt csak a VA miatt létezik (-_-)
+                if(specialMaxLengths){
+                    let newPanelSizes=[];
+                    panelSizes.forEach((size, index) => {
+                        if(specialMaxLengthsLookup[size] >= panelLength){
+                            newPanelSizes.push(size);
+                        }
+                    });
+                    panelSizes = newPanelSizes;
+                }
+
                 //panel amounts
                 let freeSpace = shorterSide - 0.2;
                 let bestRemainder = freeSpace;
@@ -385,7 +407,7 @@
             }
             res = {
                 "panelAmount": panelAmount,
-                "panelWidth": bestPanelWidth,
+                "panelWidth": bestPanelWidth*1000,
                 "panelLength": panelLength,
                 "panelArea": panelArea,
                 "pipe": pipe
