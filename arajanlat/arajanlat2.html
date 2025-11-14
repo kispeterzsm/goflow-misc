@@ -263,8 +263,8 @@
                 }
 
                 // Check distance field when required
-                if ((room.heatingSystem === 'B' || room.floorHeating) && (!room.distanceFromHub || room.distanceFromHub < 0)) {
-                    errors.push(`Room ${roomNumber}: Distance from hub is required when heating system is B or floor heating is enabled, and must be 0 or greater.`);
+                if ((room.heatingSystem === 'BK100' || room.floorHeating) && (!room.distanceFromHub || room.distanceFromHub < 0)) {
+                    errors.push(`Room ${roomNumber}: Distance from hub is required when heating system is BK100 or floor heating is enabled, and must be 0 or greater.`);
                 }
             });
 
